@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -38,7 +40,7 @@ public class MajorServiceTest {
         assertThat(savedMajor.getName()).isEqualTo("Computer science");
         assertThat(savedMajor.getId()).isNotNull();
 
-        assertThat(majorRepository.existsById(savedMajor.getId())).isTrue();
+        assertThat(majorService.majorExistsById(savedMajor.getId()));
     }
 
     @Test
@@ -52,7 +54,7 @@ public class MajorServiceTest {
         );
 
         Major saved = majorRepository.save(major);
-        Major result = majorService.getById(saved.getId());
+        Major result = majorService.getMajorById(saved.getId());
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo((saved.getId()));
@@ -66,7 +68,7 @@ public class MajorServiceTest {
     @Test
     void getMajor_notFound_throwsResourceNotFoundException() {
         Long nonExistentId = 123L;
-        assertThatThrownBy(() -> majorService.getById(nonExistentId)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Major not found with id " + nonExistentId);
+        assertThatThrownBy(() -> majorService.getMajorById(nonExistentId)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Major not found with id " + nonExistentId);
     }
 
     @Test
@@ -100,4 +102,135 @@ public class MajorServiceTest {
 
 
     }
+
+    @Test
+    void getAllMajors_majorsExist_returnsAllMajors() {
+        Major major = new Major(
+                "Mathematics",
+                "MATH",
+                "BS",
+                "Math major",
+                126
+        );
+
+        Major major2 = new Major(
+                "Computer science",
+                "CS",
+                "BS",
+                "Compsci major",
+                126
+        );
+
+
+        Major saved1 = majorRepository.save(major);
+        Major saved2 = majorRepository.save(major2);
+
+        List<Major> results = majorService.getAllMajors();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isEqualTo(2);
+        assertThat(results).extracting(Major::getCode).containsExactlyInAnyOrder("MATH", "CS");
+
+    }
+
+    @Test void getAllMajors_noMajors_returnsEmptyList() {
+        List<Major> results = majorService.getAllMajors();
+        assertThat(results).isEmpty();
+        assertThat(results).isNotNull();
+    }
+
+    @Test
+    void updateMajor_validData_updatesAndReturnsMajor() {
+        Major major = new Major(
+                "Mathematics",
+                "MATH",
+                "BS",
+                "Math major",
+                126
+        );
+
+        Major saved = majorRepository.save(major);
+
+        Long major_id = saved.getId();
+        assertThat(major.getId()).isEqualTo(major_id);
+        assertThat(major.getName()).isEqualTo("Mathematics");
+        assertThat(major.getCode()).isEqualTo("MATH");
+        assertThat(major.getDescription()).isEqualTo("Math major");
+        assertThat(major.getDesignation()).isEqualTo("BS");
+        assertThat(major.getTotalCreditsRequired()).isEqualTo(126);
+
+        Major updatedData = new Major (
+                "Applied mathematics",
+                "MATH",
+                "BA",
+                "Applied math major",
+                120
+        );
+        Major updated = majorService.updateMajorByCode(saved.getCode(), updatedData);
+
+        assertThat(updated).isNotNull();
+        assertThat(updated.getName()).isEqualTo("Applied mathematics");
+        assertThat(updated.getCode()).isEqualTo("MATH");
+        assertThat(updated.getDescription()).isEqualTo("Applied math major");
+        assertThat(updated.getDesignation()).isEqualTo("BA");
+        assertThat(updated.getTotalCreditsRequired()).isEqualTo(120);
+        assertThat(updated.getId()).isEqualTo(major_id);
+    }
+
+    @Test
+    void updateMajor_notFound_throwsException() {
+        Major major = new Major(
+                "Mathematics",
+                "MATH",
+                "BS",
+                "Math major",
+                126
+        );
+
+        Major saved = majorRepository.save(major);
+
+        Long major_id = saved.getId();
+        assertThat(major.getId()).isEqualTo(major_id);
+        assertThat(major.getName()).isEqualTo("Mathematics");
+        assertThat(major.getCode()).isEqualTo("MATH");
+        assertThat(major.getDescription()).isEqualTo("Math major");
+        assertThat(major.getDesignation()).isEqualTo("BS");
+        assertThat(major.getTotalCreditsRequired()).isEqualTo(126);
+
+        Major updatedData = new Major (
+                "Applied mathematics",
+                "MATH",
+                "BA",
+                "Applied math major",
+                120
+        );
+
+        assertThatThrownBy(() -> majorService.updateMajorByCode("CS", updatedData)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Major not found with code " + "CS");
+    }
+
+    @Test
+    void deleteMajor_exists_deletesMajor() {
+        Major major = new Major(
+                "Mathematics",
+                "MATH",
+                "BS",
+                "Math major",
+                126
+        );
+
+        majorService.createMajor(major);
+
+        assertThat(major).isNotNull();
+        assertThat(majorService.majorExistsById(major.getId()));
+        majorService.deleteMajorByCode("MATH");
+        assertThat(majorService.majorExistsById(major.getId()));
+    }
+
+    @Test
+    void deleteMajor_notFound_throwsException() {
+
+        assertThatThrownBy(() -> majorService.deleteMajorByCode("CS")).isInstanceOf(ResourceNotFoundException.class).hasMessage("Major not found with code " + "CS");
+    }
+
+
 }
