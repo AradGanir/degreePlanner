@@ -60,6 +60,21 @@ public class MajorService {
 
     }
 
+    public Major updateMajorById(Long id, Major updated) {
+        Major existing = majorRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Major not found with id " + id));
+        if (!existing.getName().equals(updated.getName()) && majorRepository.existsByName(updated.getName())) {
+            throw new DuplicateResourceException("Major with name " + updated.getName() + " already exists");
+        }
+
+        existing.setName(updated.getName());
+        existing.setDesignation(updated.getDesignation());
+        existing.setTotalCreditsRequired(updated.getTotalCreditsRequired());
+        existing.setDescription(updated.getDescription());
+        existing.setCode(updated.getCode());
+
+        return majorRepository.save(existing);
+    }
+
     public void deleteMajorByCode(String code) {
         Major major = majorRepository.findByCode(code).orElseThrow(() -> new ResourceNotFoundException("Major not found with code " + code));
         majorRepository.delete(major);
