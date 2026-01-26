@@ -7,6 +7,7 @@ import com.example.degreePlanner.repository.MajorRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class MajorServiceTest {
     @Autowired
     private MajorService majorService;
@@ -72,7 +74,7 @@ public class MajorServiceTest {
     }
 
     @Test
-    void createMajor_duplicateCode_throwsException() {
+    void createMajor_duplicateCodeDesignation_throwsException() {
         Major major = new Major(
                 "Mathematics",
                 "MATH",
@@ -89,18 +91,10 @@ public class MajorServiceTest {
                 126
         );
 
-        Major major3 = new Major(
-                "Mathematics",
-                "1111",
-                "BS",
-                "Math major",
-                126
-        );
-        Major saved = majorService.createMajor(major);
-        assertThatThrownBy(() -> majorService.createMajor(major2)).isInstanceOf(DuplicateResourceException.class).hasMessage("Major with code " + "MATH" + " already exists");
-        assertThatThrownBy(() -> majorService.createMajor(major3)).isInstanceOf(DuplicateResourceException.class).hasMessage("Major with name " + "Mathematics" + " already exists");
-
-
+        majorService.createMajor(major);
+        assertThatThrownBy(() -> majorService.createMajor(major2))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessage("Major with code MATH and designation BS already exists");
     }
 
     @Test
@@ -162,17 +156,17 @@ public class MajorServiceTest {
         Major updatedData = new Major (
                 "Applied mathematics",
                 "MATH",
-                "BA",
+                "BS",
                 "Applied math major",
                 120
         );
-        Major updated = majorService.updateMajorByCode(saved.getCode(), updatedData);
+        Major updated = majorService.updateMajorByCodeAndDesignation(saved.getCode(), saved.getDesignation(), updatedData);
 
         assertThat(updated).isNotNull();
         assertThat(updated.getName()).isEqualTo("Applied mathematics");
         assertThat(updated.getCode()).isEqualTo("MATH");
         assertThat(updated.getDescription()).isEqualTo("Applied math major");
-        assertThat(updated.getDesignation()).isEqualTo("BA");
+        assertThat(updated.getDesignation()).isEqualTo("BS");
         assertThat(updated.getTotalCreditsRequired()).isEqualTo(120);
         assertThat(updated.getId()).isEqualTo(major_id);
     }
@@ -200,12 +194,12 @@ public class MajorServiceTest {
         Major updatedData = new Major (
                 "Applied mathematics",
                 "MATH",
-                "BA",
+                "BS",
                 "Applied math major",
                 120
         );
 
-        assertThatThrownBy(() -> majorService.updateMajorByCode("CS", updatedData)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Major not found with code " + "CS");
+        assertThatThrownBy(() -> majorService.updateMajorByCodeAndDesignation("CS", "BS", updatedData)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Major not found with identifier CS_BS");
     }
 
     @Test
@@ -222,14 +216,13 @@ public class MajorServiceTest {
 
         assertThat(major).isNotNull();
         assertThat(majorService.majorExistsById(major.getId()));
-        majorService.deleteMajorByCode("MATH");
-        assertThat(majorService.majorExistsById(major.getId()));
+        majorService.deleteMajorByCodeAndDesignation("MATH", "BS");
+        assertThat(majorService.majorExistsById(major.getId())).isFalse();
     }
 
     @Test
     void deleteMajor_notFound_throwsException() {
-
-        assertThatThrownBy(() -> majorService.deleteMajorByCode("CS")).isInstanceOf(ResourceNotFoundException.class).hasMessage("Major not found with code " + "CS");
+        assertThatThrownBy(() -> majorService.deleteMajorByCodeAndDesignation("CS", "BS")).isInstanceOf(ResourceNotFoundException.class).hasMessage("Major not found with identifier CS_BS");
     }
 
 

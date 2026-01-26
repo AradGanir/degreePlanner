@@ -4,13 +4,16 @@ import com.example.degreePlanner.entity.Course;
 import com.example.degreePlanner.entity.Major;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
-    Course findCourseByCode(String code);
+    List<Course> findCourseByCode(String code);
 
-    Course findCourseById(Long id);
+    Optional<Course> findCourseById(Long id);
 
     Boolean existsByCodeAndCourseNum(String code, int num);
+
+    Optional<Course> findCourseByCodeAndCourseNum(String code, int num);
 
 }

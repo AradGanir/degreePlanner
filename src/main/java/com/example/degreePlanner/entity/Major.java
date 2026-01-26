@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table
+@Table(name = "major", uniqueConstraints = @UniqueConstraint(columnNames = {"code", "designation"}))
 public class Major {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,17 +12,17 @@ public class Major {
     public Long getId() { return id; }
 
 
-    @Column(nullable = false, unique=true)
+    @Column(nullable = false)
     private String name;
     public String getName() { return this.name; }
     public void setName (String name) { this.name = name; }
 
-    @Column(nullable=false, unique=true)
+    @Column(nullable=false)
     private String code;
     public String getCode() { return this.code; }
     public void setCode (String code) { this.code = code; }
 
-    @Column
+    @Column(nullable=false)
     private String designation;
     public String getDesignation() { return this.designation; }
     public void setDesignation (String designation) { this.designation = designation; }

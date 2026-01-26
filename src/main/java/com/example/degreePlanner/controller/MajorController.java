@@ -14,18 +14,25 @@ import java.util.List;
 public class MajorController {
 
     @Autowired
-    private MajorService majorService;
+    private final MajorService majorService;
+
+    public MajorController(MajorService majorService) {
+        this.majorService = majorService;
+    }
 
     @GetMapping // /majors
     public ResponseEntity<List<Major>> getAllMajors() {
         return ResponseEntity.ok(majorService.getAllMajors());
     }
-    @GetMapping("/by-code/{code}") // /majors/{code}
-    public ResponseEntity<Major> getMajorByCode(@PathVariable String code) {
-        return ResponseEntity.ok(majorService.getMajorByCode(code));
+    @GetMapping("/{codeDesignation}") // /majors/CS_BS
+    public ResponseEntity<Major> getMajorByCodeDesignation(@PathVariable String codeDesignation) {
+        String[] parts = codeDesignation.split("_");
+        String code = parts[0];
+        String designation = parts[1];
+        return ResponseEntity.ok(majorService.getMajorByCodeAndDesignation(code, designation));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public ResponseEntity<Major> getMajorById(@PathVariable Long id) {
         return ResponseEntity.ok(majorService.getMajorById(id));
     }
@@ -33,29 +40,32 @@ public class MajorController {
 
 
     @PostMapping // /majors // create
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Major> createMajor(@RequestBody Major major) {
         Major created = majorService.createMajor(major);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    //@PutMapping // /majors/{id} // update
-    @PutMapping("/by-code/{code}")
-    public ResponseEntity<Major> updateMajorByCode(@PathVariable String code, @RequestBody Major major) {
-        return ResponseEntity.ok(majorService.updateMajorByCode(code, major));
+    @PutMapping("/{codeDesignation}") // /majors/CS_BS
+    public ResponseEntity<Major> updateMajorByCodeDesignation(@PathVariable String codeDesignation, @RequestBody Major major) {
+        String[] parts = codeDesignation.split("_");
+        String code = parts[0];
+        String designation = parts[1];
+        return ResponseEntity.ok(majorService.updateMajorByCodeAndDesignation(code, designation, major));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/id/{id}")
     public ResponseEntity<Major> updateMajorById(@PathVariable Long id, @RequestBody Major major) {
         return ResponseEntity.ok(majorService.updateMajorById(id, major));
     }
 
 
 
-    //@DeleteMapping // /majors/{id}
-    @DeleteMapping("/by-code/{code}")
-    public ResponseEntity<Void> deleteMajor (@PathVariable String code) {
-        majorService.deleteMajorByCode(code);
+    @DeleteMapping("/{codeDesignation}") // /majors/CS_BS
+    public ResponseEntity<Void> deleteMajor(@PathVariable String codeDesignation) {
+        String[] parts = codeDesignation.split("_");
+        String code = parts[0];
+        String designation = parts[1];
+        majorService.deleteMajorByCodeAndDesignation(code, designation);
         return ResponseEntity.noContent().build();
     }
 

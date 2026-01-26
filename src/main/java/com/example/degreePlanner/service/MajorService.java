@@ -19,11 +19,8 @@ public class MajorService {
     }
 
     public Major createMajor(Major major){
-        if (majorRepository.existsByCode(major.getCode())) {
-            throw new DuplicateResourceException("Major with code " + major.getCode() + " already exists");
-        }
-        if (majorRepository.existsByName(major.getName())) {
-            throw new DuplicateResourceException("Major with name " + major.getName() + " already exists");
+        if (majorRepository.existsByCodeAndDesignation(major.getCode(),major.getDesignation())) {
+            throw new DuplicateResourceException("Major with code " + major.getCode() + " and designation " + major.getDesignation() + " already exists");
         }
         return majorRepository.save(major);
     }
@@ -36,47 +33,40 @@ public class MajorService {
         return majorRepository.existsById(id);
     }
 
-    public Major getMajorByCode(String code) {
-        return majorRepository.findByCode(code).orElseThrow(() -> new ResourceNotFoundException("Major not found with code " + code));
+    public Major getMajorByCodeAndDesignation(String code, String designation) {
+        return majorRepository.findByCodeAndDesignation(code, designation)
+                .orElseThrow(() -> new ResourceNotFoundException("Major not found with identifier " + code + "_" + designation));
     }
 
     public List<Major> getAllMajors() {
         return majorRepository.findAll();
     }
 
-    public Major updateMajorByCode(String code, Major updated) {
-        Major existing = majorRepository.findByCode(code).orElseThrow(() -> new ResourceNotFoundException("Major not found with code " + code));
-
-        // If name is changing
-        if (!existing.getName().equals(updated.getName()) && majorRepository.existsByName(updated.getName())) {
-            throw new DuplicateResourceException("Major with name " + updated.getName() + " already exists");
-        }
+    public Major updateMajorByCodeAndDesignation(String code, String designation, Major updated) {
+        Major existing = majorRepository.findByCodeAndDesignation(code, designation)
+                .orElseThrow(() -> new ResourceNotFoundException("Major not found with identifier " + code + "_" + designation));
 
         existing.setName(updated.getName());
-        existing.setDesignation(updated.getDesignation());
         existing.setTotalCreditsRequired(updated.getTotalCreditsRequired());
         existing.setDescription(updated.getDescription());
         return majorRepository.save(existing);
-
     }
 
     public Major updateMajorById(Long id, Major updated) {
         Major existing = majorRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Major not found with id " + id));
-        if (!existing.getName().equals(updated.getName()) && majorRepository.existsByName(updated.getName())) {
-            throw new DuplicateResourceException("Major with name " + updated.getName() + " already exists");
-        }
 
         existing.setName(updated.getName());
-        existing.setDesignation(updated.getDesignation());
         existing.setTotalCreditsRequired(updated.getTotalCreditsRequired());
         existing.setDescription(updated.getDescription());
         existing.setCode(updated.getCode());
+        existing.setDesignation(updated.getDesignation());
 
         return majorRepository.save(existing);
     }
 
-    public void deleteMajorByCode(String code) {
-        Major major = majorRepository.findByCode(code).orElseThrow(() -> new ResourceNotFoundException("Major not found with code " + code));
+    public void deleteMajorByCodeAndDesignation(String code, String designation) {
+        Major major = majorRepository.findByCodeAndDesignation(code, designation)
+                .orElseThrow(() -> new ResourceNotFoundException("Major not found with identifier " + code + "_" + designation));
         majorRepository.delete(major);
     }
 
