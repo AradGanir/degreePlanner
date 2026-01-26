@@ -2,6 +2,9 @@ package com.example.degreePlanner.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 
 @Entity
 @Table(name = "course", uniqueConstraints = @UniqueConstraint(columnNames = {"code", "courseNum"}))
@@ -43,14 +46,25 @@ public class Course {
     public void setDescription(String description) { this.description = description; }
 
     @Column(nullable = false)
-    private int credits;
+    private int credits;  // max credits (or fixed if no range)
     public int getCredits() { return this.credits; }
     public void setCredits(int credits) { this.credits = credits; }
+
+    @Column
+    private Integer minCredits;  // only set if variable credits (e.g., 1-4)
+    public Integer getMinCredits() { return this.minCredits; }
+    public void setMinCredits(Integer minCredits) { this.minCredits = minCredits; }
+
+    @Transient
+    public boolean hasVariableCredits() { return minCredits != null && minCredits < credits; }
 
     @Transient
     public String getFullCode() {
         return code + courseNum;
     }
+
+    @ManyToMany(mappedBy="courses")
+    private Set<Requirement> requirements = new HashSet<>();
 
 
 
