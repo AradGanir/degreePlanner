@@ -57,9 +57,9 @@ public class MajorControllerTest {
 
     //@PostMapping → 201 Created
     //@GetMapping → 200 OK
-    //@GetMapping("/{codeDesignation}") → 200 OK or 404
-    //@PutMapping("/{codeDesignation}") → 200 OK
-    //@DeleteMapping("/{codeDesignation}") → 204 No Content
+    //@GetMapping("/{code}/{designation}") → 200 OK or 404
+    //@PutMapping("/{code}/{designation}") → 200 OK
+    //@DeleteMapping("/{code}/{designation}") → 204 No Content
 
 
 
@@ -92,14 +92,14 @@ public class MajorControllerTest {
     @Test
     void getMajor_exists_returns200() throws Exception {
         majorRepository.save(new Major("Computer Science", "CS", "BS", "test", 120));
-        mockMvc.perform(get("/majors/{codeDesignation}", "CS_BS"))
+        mockMvc.perform(get("/majors/{code}/{designation}", "CS", "BS"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Computer Science"));
     }
 
     @Test
     void getMajor_notFound_returns404() throws Exception {
-        mockMvc.perform(get("/majors/{codeDesignation}", "CS_BS"))
+        mockMvc.perform(get("/majors/{code}/{designation}", "CS", "BS"))
                 .andExpect(status().isNotFound());
     }
 
@@ -119,11 +119,11 @@ public class MajorControllerTest {
 
 
     @Test
-    void updateMajor_ByCodeDesignation_validRequest_returns200() throws Exception {
+    void updateMajor_validRequest_returns200() throws Exception {
         Major major = majorRepository.save(new Major("Computer Science", "CS", "BS", "test", 120));
 
         major.setName("Name2");
-        mockMvc.perform(put("/majors/{codeDesignation}", "CS_BS")
+        mockMvc.perform(put("/majors/{code}/{designation}", "CS", "BS")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(asJsonString(major)))
                 .andExpect(status().isOk())
@@ -133,7 +133,7 @@ public class MajorControllerTest {
     @Test
     void deleteMajor_validRequest_returns204() throws Exception {
         majorRepository.save(new Major("Computer Science", "CS", "BS", "test", 120));
-        mockMvc.perform(delete("/majors/{codeDesignation}", "CS_BS"))
+        mockMvc.perform(delete("/majors/{code}/{designation}", "CS", "BS"))
                 .andExpect(status().isNoContent());
     }
 }
