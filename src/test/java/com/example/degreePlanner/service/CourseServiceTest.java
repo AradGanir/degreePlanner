@@ -1,13 +1,16 @@
 package com.example.degreePlanner.service;
 
 import com.example.degreePlanner.entity.Course;
+import com.example.degreePlanner.entity.Prerequisite;
+import com.example.degreePlanner.entity.PrerequisiteType;
 import com.example.degreePlanner.exception.DuplicateResourceException;
 import com.example.degreePlanner.exception.ResourceNotFoundException;
+import com.example.degreePlanner.repository.PrerequisiteItemRepository;
+import com.example.degreePlanner.repository.PrerequisiteRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.support.Resource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +31,16 @@ public class CourseServiceTest {
     @Autowired
     private CourseService courseService;
 
+    @Autowired
+    private PrerequisiteItemRepository prerequisiteItemRepository;
+
+    @Autowired
+    private PrerequisiteRepository prerequisiteRepository;
+
     private Course math250() {
         return new Course(
                 "MATH",
-                250,
+                "250",
                 "Introduction to Mathematics",
                 "Starting off the math world",
                 3
@@ -41,7 +50,7 @@ public class CourseServiceTest {
     private Course math111() {
         return new Course(
                 "MATH",
-                111,
+                "111",
                 "Calculus 1",
                 "Diferentiation and Integration",
                 3
@@ -51,7 +60,7 @@ public class CourseServiceTest {
     private Course cs170() {
         return new Course(
                 "CS",
-                170,
+                "170",
                 "Intro to CS",
                 "Introduction to compsci",
                 4
@@ -65,7 +74,7 @@ public class CourseServiceTest {
 
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getCode()).isEqualTo("MATH");
-        assertThat(saved.getCourseNum()).isEqualTo(250);
+        assertThat(saved.getCourseNum()).isEqualTo("250");
         assertThat(saved.getTitle()).isEqualTo("Introduction to Mathematics");
     }
 
@@ -143,13 +152,13 @@ public class CourseServiceTest {
     @Test
     void getCourseByCodeAndCourseNum_exists_returnsCourse() {
         Course math1 =  courseService.createCourse(math250());
-        assertThat(courseService.getCourseByCodeAndCourseNum("MATH", 250).getCode()).isEqualTo("MATH");
-        assertThat(courseService.getCourseByCodeAndCourseNum("MATH", 250).getId()).isNotNull();
+        assertThat(courseService.getCourseByCodeAndCourseNum("MATH", "250").getCode()).isEqualTo("MATH");
+        assertThat(courseService.getCourseByCodeAndCourseNum("MATH", "250").getId()).isNotNull();
     }
 
     @Test
     void getCourseByCodeAndCourseNum_notFound_throwsException() {
-        assertThatThrownBy(() -> courseService.getCourseByCodeAndCourseNum("TEST", 250)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course TEST250 not found");
+        assertThatThrownBy(() -> courseService.getCourseByCodeAndCourseNum("TEST", "250")).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course TEST250 not found");
     }
 
     @Test
@@ -167,7 +176,7 @@ public class CourseServiceTest {
         assertThat(updated).isNotNull();
         assertThat(updated.getTitle()).isEqualTo("Calculus 1");
         assertThat(updated.getCode()).isEqualTo("MATH");
-        assertThat(updated.getCourseNum()).isEqualTo(111);
+        assertThat(updated.getCourseNum()).isEqualTo("111");
 
     }
 
@@ -184,7 +193,7 @@ public class CourseServiceTest {
         Course saved = courseService.createCourse(course);
 
         String course_code = saved.getCode();
-        int course_num = saved.getCourseNum();
+        String course_num = saved.getCourseNum();
 
         Course updatedCourse = math111();
 
@@ -193,13 +202,13 @@ public class CourseServiceTest {
         assertThat(updated).isNotNull();
         assertThat(updated.getTitle()).isEqualTo("Calculus 1");
         assertThat(updated.getCode()).isEqualTo("MATH");
-        assertThat(updated.getCourseNum()).isEqualTo(111);
+        assertThat(updated.getCourseNum()).isEqualTo("111");
     }
 
     @Test
     void updateCourseByCodeAndCourseNum_notFound_throwsException() {
         Course update = math111();
-        assertThatThrownBy(()->courseService.updateCourseByCodeAndCourseNum("MATH", 1111, update)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course MATH1111 not found");
+        assertThatThrownBy(()->courseService.updateCourseByCodeAndCourseNum("MATH", "1111", update)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course MATH1111 not found");
 
     }
 
@@ -219,7 +228,7 @@ public class CourseServiceTest {
         Course course = math250();
         Course saved = courseService.createCourse(course);
         String course_code = saved.getCode();
-        int course_num = saved.getCourseNum();
+        String course_num = saved.getCourseNum();
 
         assertThat(courseService.getCourseByCodeAndCourseNum(course_code, course_num)).isNotNull();
 
@@ -229,7 +238,7 @@ public class CourseServiceTest {
 
     @Test
     void deleteCourseByCodeAndCourseNum_notFound_throwsException() {
-        assertThatThrownBy(()->courseService.getCourseByCodeAndCourseNum("MATH", 250)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course MATH250 not found");
+        assertThatThrownBy(()->courseService.getCourseByCodeAndCourseNum("MATH", "250")).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course MATH250 not found");
     }
 
     @Test
@@ -237,6 +246,159 @@ public class CourseServiceTest {
         assertThatThrownBy(()-> courseService.getCourseById(1000L)).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course not found with id " + 1000L);
 
     }
+
+    // PrerequisiteServiceTest for Courses
+
+    @Test
+    void setPrerequisites_validData_setsPrerequisites() {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+        courseService.setPrerequisites(
+                math250.getId(),
+                PrerequisiteType.AND,
+                List.of(math111.getId(), math112.getId())
+        );
+
+        Prerequisite prereq = prerequisiteRepository.findByCourseId(math250.getId()).orElseThrow();
+        assertThat(prereq.getType()).isEqualTo(PrerequisiteType.AND);
+        assertThat(prereq.getItems()).hasSize(2);
+        assertThat(prereq.getItems())
+                .extracting(item -> item.getCourse().getId())
+                .containsExactlyInAnyOrder(math111.getId(), math112.getId());
+
+    }
+
+    @Test
+    void setPrerequisites_courseNotFound_throwsException() {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+
+
+        assertThatThrownBy(()-> courseService.setPrerequisites(
+                10000L,
+                PrerequisiteType.AND,
+                List.of(math111.getId(), math112.getId())
+        )).isInstanceOf(ResourceNotFoundException.class).hasMessage("Course not found with id 10000");
+    }
+
+    @Test
+    void setPrerequisites_prerequisiteNotFound_throwsException() {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+
+        assertThatThrownBy(()-> courseService.setPrerequisites(
+                math250.getId(),
+                PrerequisiteType.AND,
+                List.of(math111.getId(), 10000L)
+        )).isInstanceOf(ResourceNotFoundException.class).hasMessage("Required course not found with id 10000");
+    }
+
+    @Test
+    void setPrerequisites_replaceExisting_updatesPrerequisites() {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+        courseService.setPrerequisites(
+                math250.getId(),
+                PrerequisiteType.AND,
+                List.of(math111.getId(), math112.getId())
+        );
+
+        Prerequisite prereq = prerequisiteRepository.findByCourseId(math250.getId()).orElseThrow();
+        assertThat(prereq.getType()).isEqualTo(PrerequisiteType.AND);
+        assertThat(prereq.getItems()).hasSize(2);
+        assertThat(prereq.getItems())
+                .extracting(item -> item.getCourse().getId())
+                .containsExactlyInAnyOrder(math111.getId(), math112.getId());
+
+
+        Course math112z = courseService.createCourse(new Course("MATH", "114", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111z = courseService.createCourse(new Course("MATH", "113", "Calculus 1", "Intro to calculus", 3));
+
+        courseService.setPrerequisites(
+                math250.getId(),
+                PrerequisiteType.OR,
+                List.of(math111z.getId(), math112z.getId())
+        );
+
+        Prerequisite prereq2 = prerequisiteRepository.findByCourseId(math250.getId()).orElseThrow();
+        assertThat(prereq2.getType()).isEqualTo(PrerequisiteType.OR);
+        assertThat(prereq2.getItems()).hasSize(2);
+        assertThat(prereq2.getItems())
+                .extracting(item -> item.getCourse().getId())
+                .containsExactlyInAnyOrder(math111z.getId(), math112z.getId());
+    }
+
+    @Test
+    void getPrerequisites_exists_returnsPrerequisites() {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+        courseService.setPrerequisites(
+                math250.getId(),
+                PrerequisiteType.AND,
+                List.of(math111.getId(), math112.getId())
+        );
+
+        Prerequisite prereq = courseService.getPrerequisite(math250.getId());
+        assertThat(prereq.getType()).isEqualTo(PrerequisiteType.AND);
+        assertThat(prereq.getItems()).hasSize(2);
+        assertThat(prereq.getItems())
+            .extracting(item -> item.getCourse().getId())
+                .containsExactlyInAnyOrder(math111.getId(), math112.getId());
+    }
+
+    @Test
+    void getPrerequisites_none_returnsNull() {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+
+        Prerequisite prereq = courseService.getPrerequisite(math250.getId());
+
+        assertThat(prereq).isNull();
+    }
+
+    @Test
+    void deletePrerequisite_exists_removesPrerequisites() {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+        courseService.setPrerequisites(
+                math250.getId(),
+                PrerequisiteType.AND,
+                List.of(math111.getId(), math112.getId())
+        );
+
+        assertThat(courseService.getPrerequisite(math250.getId())).isNotNull();
+
+        courseService.removePrerequisite(math250.getId());
+        assertThat(courseService.getPrerequisite(math250.getId())).isNull();
+    }
+
+    @Test
+    void deletePrerequisite_none_doesNothing() {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        assertThat(courseService.getPrerequisite(math250.getId())).isNull();
+
+        courseService.removePrerequisite(math250.getId());
+
+        assertThat(courseService.getPrerequisite(math250.getId())).isNull();
+
+    }
+
+
+
+
+
 
 
 

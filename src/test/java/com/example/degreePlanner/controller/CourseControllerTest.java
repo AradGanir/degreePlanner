@@ -1,5 +1,8 @@
 package com.example.degreePlanner.controller;
 
+import com.example.degreePlanner.entity.Prerequisite;
+import com.example.degreePlanner.entity.PrerequisiteItem;
+import com.example.degreePlanner.entity.PrerequisiteType;
 import com.example.degreePlanner.repository.CourseRepository;
 import com.example.degreePlanner.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,23 +11,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.degreePlanner.entity.Course;
-import com.example.degreePlanner.repository.CourseRepository;
-import com.example.degreePlanner.service.CourseService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -55,7 +56,7 @@ public class CourseControllerTest {
     private Course math250() {
         return new Course(
                 "MATH",
-                250,
+                "250",
                 "Introduction to Mathematics",
                 "Starting off the math world",
                 3
@@ -65,7 +66,7 @@ public class CourseControllerTest {
     private Course math111() {
         return new Course(
                 "MATH",
-                111,
+                "111",
                 "Calculus 1",
                 "Diferentiation and Integration",
                 3
@@ -75,7 +76,7 @@ public class CourseControllerTest {
     private Course cs170() {
         return new Course(
                 "CS",
-                170,
+                "170",
                 "Intro to CS",
                 "Introduction to compsci",
                 4
@@ -165,4 +166,9 @@ public class CourseControllerTest {
         mockMvc.perform(delete("/courses/{code}/{courseNum}", "MATH", 111))
                 .andExpect(status().isNotFound());
     }
+
+    // Prerequisites Test
+    // TODO Create all my prerequisite tests, once i can figure out how to bypass the jackson issues
+
+
 }

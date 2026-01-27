@@ -11,7 +11,7 @@ import java.util.Set;
 public class Course {
     protected Course(){}
 
-    public Course(String code, int courseNum, String title, String description, int credits) {
+    public Course(String code, String courseNum, String title, String description, int credits) {
         this.code = code;
         this.courseNum = courseNum;
         this.title = title;
@@ -31,9 +31,9 @@ public class Course {
     public void setCode (String code) { this.code = code; }
 
     @Column(nullable=false)
-    private int courseNum;
-    public int getCourseNum() { return this.courseNum; }
-    public void setCourseNum (int courseNum) { this.courseNum = courseNum; }
+    private String courseNum;
+    public String getCourseNum() { return this.courseNum; }
+    public void setCourseNum (String courseNum) { this.courseNum = courseNum; }
 
     @Column(nullable = false)
     private String title;

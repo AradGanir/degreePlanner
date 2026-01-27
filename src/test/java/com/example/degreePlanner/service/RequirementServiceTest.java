@@ -51,9 +51,9 @@ public class RequirementServiceTest {
         csMajor = majorRepository.save(new Major("Computer Science", "CS", "BS", "CS major", 120));
 
         // Save courses to DB
-        math111 = courseRepository.save(new Course("MATH", 111, "Calculus I", "Intro calc", 4));
-        math112 = courseRepository.save(new Course("MATH", 112, "Calculus II", "More calc", 4));
-        cs170 = courseRepository.save(new Course("CS", 170, "Intro to CS", "Intro course", 4));
+        math111 = courseRepository.save(new Course("MATH", "111", "Calculus I", "Intro calc", 4));
+        math112 = courseRepository.save(new Course("MATH", "112", "Calculus II", "More calc", 4));
+        cs170 = courseRepository.save(new Course("CS", "170", "Intro to CS", "Intro course", 4));
     }
 
     // ========== CREATE ==========
