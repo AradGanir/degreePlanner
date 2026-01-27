@@ -4,6 +4,8 @@ import com.example.degreePlanner.entity.Prerequisite;
 import com.example.degreePlanner.entity.PrerequisiteItem;
 import com.example.degreePlanner.entity.PrerequisiteType;
 import com.example.degreePlanner.repository.CourseRepository;
+import com.example.degreePlanner.repository.PrerequisiteItemRepository;
+import com.example.degreePlanner.repository.PrerequisiteRepository;
 import com.example.degreePlanner.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,9 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
 @SpringBootTest
@@ -39,10 +39,17 @@ public class CourseControllerTest {
 
     @Autowired
     private CourseRepository courseRepository;
+    @Autowired
+    private PrerequisiteRepository prerequisiteRepository;
+    @Autowired
+    private PrerequisiteItemRepository prerequisiteItemRepository;
 
     @BeforeEach
     void setup() {
         courseRepository.deleteAll();
+        prerequisiteRepository.deleteAll();
+        prerequisiteItemRepository.deleteAll();
+
     }
 
     public static String asJsonString(final Object obj) {
@@ -170,5 +177,91 @@ public class CourseControllerTest {
     // Prerequisites Test
     // TODO Create all my prerequisite tests, once i can figure out how to bypass the jackson issues
 
+    @Test
+    void setPrerequisite_validRequest_returns200() throws Exception {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+        String requestBody = String.format("""
+            {
+                "type": "AND",
+                "courseIds": [%d, %d]
+            }
+            """, math111.getId(), math112.getId());
+
+        mockMvc.perform(put("/courses/{code}/{courseNum}/prerequisite", "MATH", "250")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("AND"))
+                .andExpect(jsonPath("$.items.length()").value(2));
+    }
+
+    @Test
+    void setPrerequisite_courseNotFound_returns404() throws Exception {
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+        String requestBody = String.format("""
+            {
+                "type": "AND",
+                "courseIds": [%d, %d]
+            }
+            """, math111.getId(), math112.getId());
+
+        mockMvc.perform(put("/courses/{code}/{courseNum}/prerequisite", "MATH", "250")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void setPrerequisite_prerequisiteCourseNotFound_returns404() throws Exception {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+        Long id = 100000L;
+
+        String requestBody = String.format("""
+            {
+                "type": "AND",
+                "courseIds": [%d, %d]
+            }
+            """, math111.getId(), id);
+
+        mockMvc.perform(put("/courses/{code}/{courseNum}/prerequisite", "MATH", "250")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getPrerequisites_exists_returns200() throws Exception {
+        Course math250 = courseService.createCourse(new Course("MATH", "250", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        Course math112 = courseService.createCourse(new Course("MATH", "112", "Calculus 2", "Derivations and Integrations", 3));
+        Course math111 = courseService.createCourse(new Course("MATH", "111", "Calculus 1", "Intro to calculus", 3));
+
+        courseService.setPrerequisites(
+                math250.getId(),
+                PrerequisiteType.AND,
+                List.of(math111.getId(), math112.getId())
+        );
+
+        mockMvc.perform(get("/courses/{code}/{courseNum}/prerequisite", "MATH", "250"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("AND"))
+                .andExpect(jsonPath("$.items.length()").value(2));
+    }
+
+    @Test
+    void getPrerequisites_notExists_ReturnsEmpty() throws Exception {
+        Course math210 = courseService.createCourse(new Course("MATH", "210", "Foundations of Mathematics", "Intro to theoretical mathematics", 3));
+        mockMvc.perform(get("/courses/{code}/{courseNum}/prerequisite", "MATH", "210"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(""));
+    }
 
 }

@@ -21,6 +21,7 @@ public class Prerequisite {
     private PrerequisiteType type;
 
     @OneToMany(mappedBy = "prerequisite", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonManagedReference
     private Set<PrerequisiteItem> items = new HashSet<>();
 
     public Long getId() { return this.id; }

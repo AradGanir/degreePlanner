@@ -9,6 +9,7 @@ public class PrerequisiteItem {
     private Long id;
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonBackReference
     @JoinColumn(name="prerequisite_id", nullable = false)
     private Prerequisite prerequisite;
 
@@ -20,6 +21,7 @@ public class PrerequisiteItem {
 
     @ManyToOne
     @JoinColumn(name="nested_prerequisite_id", nullable = true)
+
     private Prerequisite nestedPrerequisite;
 
 

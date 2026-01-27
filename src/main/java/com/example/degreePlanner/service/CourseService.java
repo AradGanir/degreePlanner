@@ -5,7 +5,6 @@ import com.example.degreePlanner.entity.Prerequisite;
 import com.example.degreePlanner.entity.PrerequisiteType;
 import com.example.degreePlanner.exception.DuplicateResourceException;
 import com.example.degreePlanner.repository.CourseRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.example.degreePlanner.exception.ResourceNotFoundException;
 import com.example.degreePlanner.repository.PrerequisiteRepository;
@@ -14,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional

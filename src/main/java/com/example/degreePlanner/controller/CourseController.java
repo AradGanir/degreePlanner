@@ -50,11 +50,29 @@ public class CourseController {
     }
 
     @PutMapping("/{code}/{courseNum}/prerequisite")
-    public ResponseEntity<Prerequisite> setPrerequisites(@PathVariable String code, @PathVariable String courseNum, @RequestBody Prerequisite prerequisite){
+    public ResponseEntity<Prerequisite> setPrerequisites(
+            @PathVariable String code,
+            @PathVariable String courseNum,
+            @RequestBody Map<String, Object> body) {
         Course course = courseService.getCourseByCodeAndCourseNum(code, courseNum);
 
-        courseService.setPrerequisites(course.getId(), prerequisite.getType(), prerequisite.getItems().stream().map(item->item.getCourse().getId()).toList());
-        return ResponseEntity.ok().build();
+        PrerequisiteType type = PrerequisiteType.valueOf((String) body.get("type"));
+
+        // Cast the courseIds from the JSON array
+        @SuppressWarnings("unchecked")
+        List<Integer> courseIdsInt = (List<Integer>) body.get("courseIds");
+        List<Long> courseIds = courseIdsInt.stream()
+                .map(Integer::longValue)
+                .toList();
+
+        Prerequisite prereq = courseService.setPrerequisites(course.getId(), type, courseIds);
+        return ResponseEntity.ok(prereq);
+    }
+
+    @GetMapping("/{code}/{courseNum}/prerequisite")
+    public ResponseEntity<Prerequisite> getPrerequisites(@PathVariable String code, @PathVariable String courseNum) {
+        Long courseId = courseService.getCourseByCodeAndCourseNum(code, courseNum).getId();
+        return ResponseEntity.ok(courseService.getPrerequisite(courseId));
     }
 
 

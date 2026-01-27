@@ -394,14 +394,4 @@ public class CourseServiceTest {
         assertThat(courseService.getPrerequisite(math250.getId())).isNull();
 
     }
-
-
-
-
-
-
-
-
-
-
 }
