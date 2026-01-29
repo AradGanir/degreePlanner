@@ -1,5 +1,6 @@
 package com.example.degreePlanner.controller;
 
+import com.example.degreePlanner.dto.request.CreateStudentRequest;
 import com.example.degreePlanner.entity.Student;
 import com.example.degreePlanner.service.StudentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,15 +46,21 @@ public class StudentControllerTest {
 
     @BeforeEach
     public void setup() {
+
         arad = new Student("AG123", "Arad", "Ganir", "arad@gmail.com");
         arad2 = new Student("AG456", "Arad2", "Ganir2", "arad2@gmail.com");
     }
 
     @Test
     void createStudent_validRequest_returns201()  throws Exception {
+
+        CreateStudentRequest request = new CreateStudentRequest(
+                arad.getStudentId(), arad.getFirstName(), arad.getLastName(), arad.getEmail()
+        );
+
         mockMvc.perform(post("/students")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(arad)))
+                .content(asJsonString(request)))
                 .andExpect(status().isCreated());
     }
 

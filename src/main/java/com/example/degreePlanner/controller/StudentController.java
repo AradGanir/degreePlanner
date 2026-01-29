@@ -1,5 +1,7 @@
 package com.example.degreePlanner.controller;
 
+import com.example.degreePlanner.dto.request.CreateStudentRequest;
+import com.example.degreePlanner.dto.response.StudentResponse;
 import com.example.degreePlanner.entity.Student;
 import com.example.degreePlanner.service.StudentService;
 import org.springframework.http.HttpStatus;
@@ -27,10 +29,20 @@ public class StudentController {
         return ResponseEntity.ok(studentService.getStudentById(studentId));
     }
 
-    @PostMapping("")
-    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
-        return  ResponseEntity.status(HttpStatus.CREATED).body(studentService.createStudent(student));
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public StudentResponse createStudent(@RequestBody CreateStudentRequest request) {
+        Student student = new Student (
+                request.getStudentId(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getEmail()
+        );
+
+        Student saved = studentService.createStudent(student);
+        return StudentResponse.fromEntity(saved);
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<Student> updateStudent(@PathVariable("id") Long studentId, @RequestBody Student student) {
