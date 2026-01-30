@@ -1,12 +1,15 @@
 package com.example.degreePlanner.controller;
 
 import com.example.degreePlanner.dto.request.CreateStudentRequest;
+import com.example.degreePlanner.dto.response.EligibilityResponse;
 import com.example.degreePlanner.dto.response.StudentResponse;
+import com.example.degreePlanner.entity.Course;
 import com.example.degreePlanner.entity.Student;
+import com.example.degreePlanner.service.CourseService;
+import com.example.degreePlanner.service.EligibilityService;
 import com.example.degreePlanner.service.StudentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,8 +18,15 @@ import java.util.List;
 @RequestMapping("/students")
 public class StudentController {
     private final StudentService studentService;
-    public StudentController(StudentService studentService) {
+    private final EligibilityService eligibilityService;
+    private final CourseService courseService;
+
+    public StudentController(StudentService studentService,
+                             EligibilityService eligibilityService,
+                             CourseService courseService) {
         this.studentService = studentService;
+        this.eligibilityService = eligibilityService;
+        this.courseService = courseService;
     }
 
     @GetMapping()
@@ -53,5 +63,18 @@ public class StudentController {
     public ResponseEntity<Student> deleteStudent(@PathVariable("id") Long studentId) {
         studentService.deleteStudent(studentId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/eligibility/{courseCode}/{courseNum}")
+    public ResponseEntity<EligibilityResponse> checkEligibility(
+            @PathVariable("id") Long studentId,
+            @PathVariable String courseCode,
+            @PathVariable String courseNum) {
+
+        Course course = courseService.getCourseByCodeAndCourseNum(courseCode, courseNum);
+        boolean eligible = eligibilityService.isEligibleForCourse(studentId, course.getId());
+        List<Course> missing = eligibilityService.getMissingPrerequisites(studentId, course.getId());
+
+        return ResponseEntity.ok(EligibilityResponse.fromCourse(course, eligible, missing));
     }
 }

@@ -2,10 +2,12 @@ package com.example.degreePlanner.service;
 
 import com.example.degreePlanner.entity.*;
 import com.example.degreePlanner.exception.DuplicateResourceException;
+import com.example.degreePlanner.exception.PrerequisiteNotMetException;
 import com.example.degreePlanner.exception.ResourceNotFoundException;
 import com.example.degreePlanner.repository.CourseRepository;
 import com.example.degreePlanner.repository.EnrollmentRepository;
 import com.example.degreePlanner.repository.StudentRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,17 +16,20 @@ import java.util.List;
 
 @Service
 @Transactional
-
 public class EnrollmentService {
     private final EnrollmentRepository enrollmentRepository;
     private final StudentRepository studentRepository;
     private final CourseRepository courseRepository;
+    private final EligibilityService eligibilityService;
 
-
-    public EnrollmentService(EnrollmentRepository enrollmentRepository, StudentRepository studentRepository, CourseRepository courseRepository) {
+    public EnrollmentService(EnrollmentRepository enrollmentRepository,
+                             StudentRepository studentRepository,
+                             CourseRepository courseRepository,
+                             @Lazy EligibilityService eligibilityService) {
         this.enrollmentRepository = enrollmentRepository;
         this.studentRepository = studentRepository;
         this.courseRepository = courseRepository;
+        this.eligibilityService = eligibilityService;
     }
 
     public Enrollment enrollStudent(Long studentId, Long courseId, String semester) {
@@ -36,6 +41,11 @@ public class EnrollmentService {
 
         if (enrollmentRepository.existsByStudentAndCourseAndSemester(student, course, semester)) {
             throw new DuplicateResourceException("Student already enrolled in this course for " + semester);
+        }
+
+        // Check if student is eligible (has completed prerequisites)
+        if (!eligibilityService.isEligibleForCourse(studentId, courseId)) {
+            throw new PrerequisiteNotMetException("Student has not completed prerequisites for " + course.getCode() + " " + course.getCourseNum());
         }
 
         Enrollment enrollment = new Enrollment(student, course, semester, EnrollmentStatus.IN_PROGRESS);

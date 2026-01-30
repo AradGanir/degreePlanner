@@ -37,4 +37,14 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+
+    @ExceptionHandler(PrerequisiteNotMetException.class)
+    public ResponseEntity<ErrorResponse> handlePrerequisiteNotMetException(PrerequisiteNotMetException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Prerequisite Not Met",
+                ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 }
