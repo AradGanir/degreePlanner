@@ -17,6 +17,7 @@ public class Enrollment {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = true)
     private Grade grade;
 

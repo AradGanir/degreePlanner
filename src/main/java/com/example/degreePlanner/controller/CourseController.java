@@ -1,10 +1,12 @@
 package com.example.degreePlanner.controller;
 
 
+import com.example.degreePlanner.dto.request.SetPrerequisitesRequest;
 import com.example.degreePlanner.entity.Course;
 import com.example.degreePlanner.entity.Prerequisite;
 import com.example.degreePlanner.entity.PrerequisiteType;
 import com.example.degreePlanner.service.CourseService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -73,6 +75,27 @@ public class CourseController {
     public ResponseEntity<Prerequisite> getPrerequisites(@PathVariable String code, @PathVariable String courseNum) {
         Long courseId = courseService.getCourseByCodeAndCourseNum(code, courseNum).getId();
         return ResponseEntity.ok(courseService.getPrerequisite(courseId));
+    }
+
+    /**
+     * Set complex nested prerequisites.
+     * Example body for (A OR B) AND C:
+     * {
+     *   "type": "AND",
+     *   "items": [
+     *     { "type": "OR", "items": [{ "courseId": 1 }, { "courseId": 2 }] },
+     *     { "courseId": 3 }
+     *   ]
+     * }
+     */
+    @PutMapping("/{code}/{courseNum}/prerequisite/nested")
+    public ResponseEntity<Prerequisite> setNestedPrerequisites(
+            @PathVariable String code,
+            @PathVariable String courseNum,
+            @Valid @RequestBody SetPrerequisitesRequest request) {
+        Course course = courseService.getCourseByCodeAndCourseNum(code, courseNum);
+        Prerequisite prereq = courseService.setNestedPrerequisites(course.getId(), request);
+        return ResponseEntity.ok(prereq);
     }
 
 

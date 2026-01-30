@@ -1,5 +1,7 @@
 package com.example.degreePlanner.service;
 
+import com.example.degreePlanner.dto.request.PrerequisiteItemRequest;
+import com.example.degreePlanner.dto.request.SetPrerequisitesRequest;
 import com.example.degreePlanner.entity.Course;
 import com.example.degreePlanner.entity.Prerequisite;
 import com.example.degreePlanner.entity.PrerequisiteType;
@@ -129,8 +131,57 @@ public class CourseService {
         prerequisiteRepository.findByCourseId(courseId).ifPresent(prerequisiteRepository::delete);
     }
 
+    /**
+     * Set complex nested prerequisites for a course.
+     * Supports structures like: (A OR B) AND (C OR D) AND E
+     */
+    public Prerequisite setNestedPrerequisites(Long courseId, SetPrerequisitesRequest request) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id " + courseId));
 
+        // Delete existing prerequisite
+        prerequisiteRepository.findByCourseId(courseId).ifPresent(prerequisiteRepository::delete);
+        prerequisiteRepository.flush();
 
+        // Create root prerequisite
+        Prerequisite root = new Prerequisite(course, request.getType(), new HashSet<>());
+        root = prerequisiteRepository.save(root);
+
+        // Build items recursively
+        for (PrerequisiteItemRequest itemRequest : request.getItems()) {
+            PrerequisiteItem item = buildPrerequisiteItem(root, itemRequest);
+            root.getItems().add(item);
+        }
+
+        return prerequisiteRepository.save(root);
+    }
+
+    /**
+     * Recursively build a PrerequisiteItem from request.
+     * Can be a leaf (courseId) or a nested group (type + items).
+     */
+    private PrerequisiteItem buildPrerequisiteItem(Prerequisite parent, PrerequisiteItemRequest request) {
+        if (request.isLeaf()) {
+            // Leaf node - just a course
+            Course course = courseRepository.findById(request.getCourseId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Course not found with id " + request.getCourseId()));
+            return new PrerequisiteItem(parent, course);
+        } else if (request.isGroup()) {
+            // Nested group - create a new Prerequisite and recurse
+            Prerequisite nested = new Prerequisite(null, request.getType(), new HashSet<>());
+            nested = prerequisiteRepository.save(nested);
+
+            for (PrerequisiteItemRequest childRequest : request.getItems()) {
+                PrerequisiteItem childItem = buildPrerequisiteItem(nested, childRequest);
+                nested.getItems().add(childItem);
+            }
+
+            nested = prerequisiteRepository.save(nested);
+            return new PrerequisiteItem(parent, nested);
+        } else {
+            throw new IllegalArgumentException("PrerequisiteItemRequest must be either a leaf (courseId) or a group (type + items)");
+        }
+    }
 
 
 
