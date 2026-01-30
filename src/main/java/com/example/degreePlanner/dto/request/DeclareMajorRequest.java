@@ -1,4 +1,4 @@
-package com.example.degreePlanner.dto.request.Student;
+package com.example.degreePlanner.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

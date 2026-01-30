@@ -1,6 +1,6 @@
 package com.example.degreePlanner.controller;
 
-import com.example.degreePlanner.dto.request.Student.DeclareMajorRequest;
+import com.example.degreePlanner.dto.request.DeclareMajorRequest;
 import com.example.degreePlanner.entity.Major;
 import com.example.degreePlanner.entity.Student;
 import com.example.degreePlanner.repository.StudentMajorRepository;
@@ -16,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;

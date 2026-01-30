@@ -1,7 +1,7 @@
 package com.example.degreePlanner.controller;
 
 
-import com.example.degreePlanner.dto.request.Student.DeclareMajorRequest;
+import com.example.degreePlanner.dto.request.DeclareMajorRequest;
 import com.example.degreePlanner.dto.response.StudentMajorResponse;
 import com.example.degreePlanner.service.StudentMajorService;
 import com.example.degreePlanner.entity.StudentMajor;
@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
