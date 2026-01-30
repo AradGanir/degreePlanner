@@ -1,6 +1,7 @@
 package com.example.degreePlanner.controller;
 
 
+import com.example.degreePlanner.dto.request.CourseImportRequest;
 import com.example.degreePlanner.dto.request.SetPrerequisitesRequest;
 import com.example.degreePlanner.entity.Course;
 import com.example.degreePlanner.entity.Prerequisite;
@@ -98,12 +99,15 @@ public class CourseController {
         return ResponseEntity.ok(prereq);
     }
 
-
-
-
-
-
-
-
-
+    /**
+     * Bulk import courses from JSON array.
+     * POST /courses/import
+     * Body: array of { dept, num, title, description, credits, min_credits }
+     */
+    @PostMapping("/import")
+    public ResponseEntity<CourseService.BulkImportResult> importCourses(
+            @RequestBody List<CourseImportRequest> courses) {
+        CourseService.BulkImportResult result = courseService.bulkImportCourses(courses);
+        return ResponseEntity.ok(result);
+    }
 }

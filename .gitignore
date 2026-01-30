@@ -1,4 +1,5 @@
 HELP.md
+population_plan.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -37,3 +38,8 @@ out/
 .vscode/
 
 plan.md
+demo.md
+./src/scraper/all_emory_courses.json
+./src/scraper/oxford_courses.json
+./src/scraper/SSR_TSRPT-2.pdf
+.src/scraper/student_transcript.json

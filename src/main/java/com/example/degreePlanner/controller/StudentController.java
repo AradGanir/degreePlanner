@@ -2,11 +2,13 @@ package com.example.degreePlanner.controller;
 
 import com.example.degreePlanner.dto.request.CreateStudentRequest;
 import com.example.degreePlanner.dto.response.EligibilityResponse;
+import com.example.degreePlanner.dto.response.MajorProgressResponse;
 import com.example.degreePlanner.dto.response.StudentResponse;
 import com.example.degreePlanner.entity.Course;
 import com.example.degreePlanner.entity.Student;
 import com.example.degreePlanner.service.CourseService;
 import com.example.degreePlanner.service.EligibilityService;
+import com.example.degreePlanner.service.ProgressService;
 import com.example.degreePlanner.service.StudentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +22,16 @@ public class StudentController {
     private final StudentService studentService;
     private final EligibilityService eligibilityService;
     private final CourseService courseService;
+    private final ProgressService progressService;
 
     public StudentController(StudentService studentService,
                              EligibilityService eligibilityService,
-                             CourseService courseService) {
+                             CourseService courseService,
+                             ProgressService progressService) {
         this.studentService = studentService;
         this.eligibilityService = eligibilityService;
         this.courseService = courseService;
+        this.progressService = progressService;
     }
 
     @GetMapping()
@@ -76,5 +81,26 @@ public class StudentController {
         List<Course> missing = eligibilityService.getMissingPrerequisites(studentId, course.getId());
 
         return ResponseEntity.ok(EligibilityResponse.fromCourse(course, eligible, missing));
+    }
+
+    @GetMapping("/{id}/progress")
+    public ResponseEntity<List<MajorProgressResponse>> getOverallProgress(
+            @PathVariable("id") Long studentId) {
+
+        List<MajorProgressResponse> progress = progressService.getOverallProgress(studentId).stream()
+                .map(MajorProgressResponse::fromServiceResult)
+                .toList();
+
+        return ResponseEntity.ok(progress);
+    }
+
+    @GetMapping("/{id}/progress/{code}/{designation}")
+    public ResponseEntity<MajorProgressResponse> getMajorProgress(
+            @PathVariable("id") Long studentId,
+            @PathVariable String code,
+            @PathVariable String designation) {
+
+        ProgressService.MajorProgress progress = progressService.getMajorProgress(studentId, code, designation);
+        return ResponseEntity.ok(MajorProgressResponse.fromServiceResult(progress));
     }
 }

@@ -13,6 +13,9 @@ import com.example.degreePlanner.repository.PrerequisiteRepository;
 import com.example.degreePlanner.entity.PrerequisiteItem;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.degreePlanner.dto.request.CourseImportRequest;
+
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -183,7 +186,51 @@ public class CourseService {
         }
     }
 
+    /**
+     * Bulk import courses from JSON data.
+     * Skips duplicates and returns count of imported courses.
+     */
+    public BulkImportResult bulkImportCourses(List<CourseImportRequest> requests) {
+        int imported = 0;
+        int skipped = 0;
+        List<String> errors = new ArrayList<>();
 
+        for (CourseImportRequest req : requests) {
+            try {
+                // Skip if already exists
+                if (courseRepository.existsByCodeAndCourseNum(req.getDept(), req.getNum())) {
+                    skipped++;
+                    continue;
+                }
 
+                // Create course - use minCredits if available, otherwise credits
+                int credits = req.getEffectiveCredits();
+                String description = req.getDescription() != null ? req.getDescription() : "";
 
+                Course course = new Course(
+                        req.getDept(),
+                        req.getNum(),
+                        req.getTitle(),
+                        description,
+                        credits
+                );
+
+                // Set minCredits if it's a variable credit course
+                if (req.getMinCredits() != null && req.getCredits() != null
+                        && req.getMinCredits() < req.getCredits()) {
+                    course.setMinCredits(req.getMinCredits());
+                    course.setCredits(req.getCredits()); // max credits
+                }
+
+                courseRepository.save(course);
+                imported++;
+            } catch (Exception e) {
+                errors.add(req.getDept() + " " + req.getNum() + ": " + e.getMessage());
+            }
+        }
+
+        return new BulkImportResult(imported, skipped, errors);
+    }
+
+    public record BulkImportResult(int imported, int skipped, List<String> errors) {}
 }
